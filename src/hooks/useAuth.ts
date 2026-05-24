@@ -39,7 +39,7 @@ export const useAuth = () => {
               full_name: 'Administrador Demo',
               role: 'admin'
             }
-          } as User;
+          } as unknown as User;
 
           const mockProfile = {
             id: 'mock-admin-id',
@@ -141,7 +141,7 @@ export const useAuth = () => {
         subscription.unsubscribe();
       }
     };
-  }, []); // Sin dependencias para evitar bucles
+  }, [isSupabaseConfigured]); // Sin dependencias para evitar bucles
 
   const signOut = async () => {
     if (!isSupabaseConfigured) {
@@ -172,7 +172,7 @@ export const useAuth = () => {
             full_name: 'Administrador Demo',
             role: 'admin'
           }
-        } as User;
+        } as unknown as User;
 
         const mockProfile = {
           id: 'mock-admin-id',
