@@ -59,31 +59,28 @@ export const Map: React.FC<MapProps> = ({
   const incidentMarkersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const routingControlRef = useRef<any>(null);
+
   const [routeInfo, setRouteInfo] = useState<{
     distance: number;
     duration: number;
   } | null>(null);
 
-  // Hook para datos de emergencia desde la base de datos
   const {
     emergencyZones,
     emergencyIncidents,
     loading: emergencyLoading,
   } = useEmergencyData();
 
-  // Hook para datos de densidad poblacional
   const { populationZones, loading: populationLoading } = usePopulationData();
 
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Inicializar el mapa centrado en El Salvador
     const map = L.map(mapRef.current, {
       zoomControl: false,
       attributionControl: false,
     }).setView([13.7942, -88.8965], 8);
 
-    // Agregar controles en posiciones específicas
     L.control.zoom({ position: "bottomright" }).addTo(map);
     L.control.attribution({ position: "bottomleft", prefix: false }).addTo(map);
 
@@ -98,17 +95,16 @@ export const Map: React.FC<MapProps> = ({
     };
   }, []);
 
-  // Función para crear ruta REAL por calles (leaflet-routing-machine + OSRM)
   const createRouteToCenter = (center: MedicalCenter) => {
     if (!mapInstanceRef.current || !userLocation) return;
 
     const LRouting = (L as any).Routing;
+
     if (!LRouting) {
-      console.error('leaflet-routing-machine no está cargado');
+      console.error("leaflet-routing-machine no está cargado");
       return;
     }
 
-    // Quitar la ruta anterior
     if (routingControlRef.current) {
       mapInstanceRef.current.removeControl(routingControlRef.current);
       routingControlRef.current = null;
@@ -120,10 +116,10 @@ export const Map: React.FC<MapProps> = ({
         L.latLng(center.lat, center.lng),
       ],
       router: LRouting.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1',
+        serviceUrl: "https://router.project-osrm.org/route/v1",
       }),
       lineOptions: {
-        styles: [{ color: '#3B82F6', weight: 5, opacity: 0.85 }],
+        styles: [{ color: "#3B82F6", weight: 5, opacity: 0.85 }],
         extendToWaypoints: true,
         missingRouteTolerance: 0,
       },
@@ -132,39 +128,44 @@ export const Map: React.FC<MapProps> = ({
       fitSelectedRoutes: true,
       routeWhileDragging: false,
       show: false,
-      createMarker: () => null, // usamos nuestros propios marcadores
+      createMarker: () => null,
     });
 
-    // Distancia y tiempo REALES que devuelve el router
-    control.on('routesfound', (e: any) => {
+    control.on("routesfound", (e: any) => {
       const route = e.routes && e.routes[0];
+
       if (route && route.summary) {
         setRouteInfo({
-          distance: route.summary.totalDistance / 1000, // metros -> km
-          duration: route.summary.totalTime / 60,        // segundos -> minutos
+          distance: route.summary.totalDistance / 1000,
+          duration: route.summary.totalTime / 60,
         });
       }
     });
 
-    // Respaldo: si el servidor de rutas falla, usar línea recta
-    control.on('routingerror', () => {
-      const d = calculateDistance(userLocation.lat, userLocation.lng, center.lat, center.lng);
-      setRouteInfo({ distance: d, duration: (d / 40) * 60 });
+    control.on("routingerror", () => {
+      const d = calculateDistance(
+        userLocation.lat,
+        userLocation.lng,
+        center.lat,
+        center.lng
+      );
+
+      setRouteInfo({
+        distance: d,
+        duration: (d / 40) * 60,
+      });
     });
 
     control.addTo(mapInstanceRef.current);
     routingControlRef.current = control;
   };
 
-  // Actualizar marcadores de centros médicos
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    // Limpiar marcadores existentes
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    // Agregar marcadores para cada centro médico
     medicalCenters.forEach((center) => {
       const color = getCenterColor(center.type);
       const iconSVG = getCenterIconSVG(center.type);
@@ -207,73 +208,93 @@ export const Map: React.FC<MapProps> = ({
           )
         : 0;
 
+      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`;
+
       const popupContent = `
-          <div class="p-2 min-w-[280px] text-sm">
-            <div class="flex items-center justify-between mb-1">
-              <h3 class="font-bold text-base text-gray-900">${center.name}</h3>
-              <span class="px-2 py-0.5 text-xs font-medium rounded-full" style="background-color: ${color}20; color: ${color}">
-                ${
-                  center.type === "hospital"
-                    ? "Hospital"
-                    : center.type === "clinic"
-                    ? "Clínica"
-                    : "Centro de Salud"
-                }
-              </span>
-            </div>
-            <div class="space-y-1 mb-2">
-              <p class="flex items-center text-gray-600"><span class="mr-2">📍</span> ${
-                center.address
-              }</p>
-              <p class="flex items-center text-gray-600"><span class="mr-2">📞</span> ${
-                center.phone
-              }</p>
-              <p class="flex items-center text-gray-600"><span class="mr-2">⏰</span> ${
-                center.schedule
-              }</p>
+        <div class="p-2 min-w-[280px] text-sm">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-base text-gray-900">${center.name}</h3>
+            <span class="px-2 py-0.5 text-xs font-medium rounded-full" style="background-color: ${color}20; color: ${color}">
               ${
-                userLocation
-                  ? `
-                <p class="flex items-center font-medium text-blue-600"><span class="mr-2">📏</span> ${formatDistance(
-                  distance
-                )}</p>
-              `
-                  : ""
+                center.type === "hospital"
+                  ? "Hospital"
+                  : center.type === "clinic"
+                  ? "Clínica"
+                  : "Centro de Salud"
               }
-            </div>
-            <div class="mb-2">
-              <p class="font-medium mb-1 text-gray-900">Servicios:</p>
-              <div class="flex flex-wrap gap-1">
-                ${center.services
-                  .map(
-                    (service) => `
-                  <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">${service}</span>
-                `
-                  )
-                  .join("")}
-              </div>
-            </div>
+            </span>
+          </div>
+
+          <div class="space-y-1 mb-2">
+            <p class="flex items-center text-gray-600">
+              <span class="mr-2">📍</span> ${center.address}
+            </p>
+
+            <p class="flex items-center text-gray-600">
+              <span class="mr-2">📞</span> ${center.phone}
+            </p>
+
+            <p class="flex items-center text-gray-600">
+              <span class="mr-2">⏰</span> ${center.schedule}
+            </p>
+
             ${
               userLocation
                 ? `
-              <button 
-                onclick="window.createRoute('${center.id}')" 
-                class="w-full bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors flex items-center justify-center"
-              >
-                <span class="mr-2">🗺️</span> Crear Ruta
-              </button>
+              <p class="flex items-center font-medium text-blue-600">
+                <span class="mr-2">📏</span> ${formatDistance(distance)}
+              </p>
             `
                 : ""
             }
           </div>
-    `;
+
+          <div class="mb-2">
+            <p class="font-medium mb-1 text-gray-900">Servicios:</p>
+
+            <div class="flex flex-wrap gap-1">
+              ${center.services
+                .map(
+                  (service) => `
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                      ${service}
+                    </span>
+                  `
+                )
+                .join("")}
+            </div>
+          </div>                                                   
+
+          <--------------boton de como llegar google maps---------------->
+          <a
+            href="${googleMapsUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-3 w-full inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-200 no-underline"
+          >
+            <span class="text-white">Cómo llegar</span>
+          </a>
+
+          ${
+            userLocation
+              ? `
+            <button 
+              onclick="window.createRoute('${center.id}')" 
+              class="mt-2 w-full bg-white text-blue-600 border border-blue-200 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center"
+            >
+              <span class="mr-2">🗺️</span> Crear ruta en el mapa
+            </button>
+          `
+              : ""
+          }
+        </div>
+      `;
 
       marker.bindPopup(popupContent, {
         maxWidth: 300,
         className: "custom-popup",
       });
 
-      // Evento de clic en el marcador
       marker.on("click", () => {
         if (userLocation) {
           createRouteToCenter(center);
@@ -284,28 +305,27 @@ export const Map: React.FC<MapProps> = ({
       markersRef.current.push(marker);
     });
 
-    // Función global para crear ruta desde el popup
     (window as any).createRoute = (centerId: string) => {
       const center = medicalCenters.find((c) => c.id === centerId);
+
       if (center && userLocation) {
         createRouteToCenter(center);
       }
     };
   }, [medicalCenters, userLocation, selectedCenter]);
 
-  // Actualizar círculos de cobertura
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    // Limpiar círculos existentes
     coverageCirclesRef.current.forEach((circle) => circle.remove());
     coverageCirclesRef.current = [];
 
     if (layers.coverage) {
       medicalCenters.forEach((center) => {
         const color = getCenterColor(center.type);
+
         const circle = L.circle([center.lat, center.lng], {
-          radius: 1000, // 1km
+          radius: 1000,
           fillColor: color,
           fillOpacity: 0.15,
           color: color,
@@ -319,11 +339,9 @@ export const Map: React.FC<MapProps> = ({
     }
   }, [layers.coverage, medicalCenters]);
 
-  // 🚨 ACTUALIZAR POLÍGONOS IRREGULARES DE ZONAS DE RIESGO DESDE BASE DE DATOS
   useEffect(() => {
     if (!mapInstanceRef.current || emergencyLoading) return;
 
-    // Limpiar polígonos de zonas de riesgo existentes
     riskZonePolygonsRef.current.forEach((polygon) => polygon.remove());
     riskZonePolygonsRef.current = [];
 
@@ -336,11 +354,8 @@ export const Map: React.FC<MapProps> = ({
       emergencyZones.forEach((zone) => {
         const color = getRiskZoneColor(zone.risk_level);
         const metrics = calculateZoneMetrics(zone, emergencyIncidents);
-
-        // Obtener polígono específico para la zona
         const polygonCoords = getZoneSpecificPolygon(zone);
 
-        // Crear polígono irregular de zona de riesgo
         const polygon = L.polygon(polygonCoords, {
           fillColor: color,
           fillOpacity: 0.25,
@@ -350,7 +365,6 @@ export const Map: React.FC<MapProps> = ({
           dashArray: zone.risk_level === "critical" ? "10, 5" : undefined,
         });
 
-        // Popup con información detallada de la zona desde BD
         const popupContent = `
           <div class="p-4 min-w-[320px]">
             <div class="flex items-center justify-between mb-3">
@@ -367,6 +381,7 @@ export const Map: React.FC<MapProps> = ({
                   zone.emergency_rate
                 )}</p>
               </div>
+
               <div class="bg-blue-50 p-3 rounded-lg">
                 <p class="text-xs text-blue-600 font-medium">Tiempo Respuesta</p>
                 <p class="text-lg font-bold text-blue-800">${formatResponseTime(
@@ -382,6 +397,7 @@ export const Map: React.FC<MapProps> = ({
                   metrics.activeIncidents
                 }</p>
               </div>
+
               <div class="bg-green-50 p-3 rounded-lg">
                 <p class="text-xs text-green-600 font-medium">Resueltos</p>
                 <p class="text-lg font-bold text-green-800">${
@@ -422,11 +438,9 @@ export const Map: React.FC<MapProps> = ({
     }
   }, [layers.riskZones, emergencyZones, emergencyIncidents, emergencyLoading]);
 
-  // 👥 ACTUALIZAR ZONAS DE DENSIDAD POBLACIONAL DESDE BASE DE DATOS
   useEffect(() => {
     if (!mapInstanceRef.current || populationLoading) return;
 
-    // Limpiar zonas de densidad poblacional existentes
     populationZoneCirclesRef.current.forEach((circle) => circle.remove());
     populationZoneCirclesRef.current = [];
 
@@ -437,27 +451,25 @@ export const Map: React.FC<MapProps> = ({
       );
 
       populationZones.forEach((zone) => {
-        // Obtener color basado en el nivel de densidad
         const getDensityColor = (level: string) => {
           switch (level) {
             case "very_high":
-              return "#7C2D12"; // Rojo oscuro
+              return "#7C2D12";
             case "high":
-              return "#EF4444"; // Rojo
+              return "#EF4444";
             case "medium":
-              return "#F59E0B"; // Amarillo/Naranja
+              return "#F59E0B";
             case "low":
-              return "#10B981"; // Verde
+              return "#10B981";
             case "very_low":
-              return "#3B82F6"; // Azul
+              return "#3B82F6";
             default:
-              return "#6B7280"; // Gris
+              return "#6B7280";
           }
         };
 
         const color = getDensityColor(zone.density_level);
 
-        // Crear círculo de zona de densidad poblacional
         const circle = L.circle([zone.lat, zone.lng], {
           radius: zone.radius,
           fillColor: color,
@@ -468,94 +480,105 @@ export const Map: React.FC<MapProps> = ({
           dashArray: zone.density_level === "very_high" ? "8, 4" : undefined,
         });
 
-        // Popup con información detallada de la zona poblacional
         const popupContent = `
-            <div class="p-2 min-w-[280px] text-sm">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="font-bold text-base text-gray-900">${zone.name}</h3>
-                <span class="px-2 py-0.5 text-xs font-bold rounded-full text-white" style="background-color: ${color}">
-                  ${zone.density_level.replace("_", " ").toUpperCase()}
-                </span>
+          <div class="p-2 min-w-[280px] text-sm">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-base text-gray-900">${zone.name}</h3>
+              <span class="px-2 py-0.5 text-xs font-bold rounded-full text-white" style="background-color: ${color}">
+                ${zone.density_level.replace("_", " ").toUpperCase()}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <div class="bg-purple-50 p-2 rounded-lg">
+                <p class="text-xs text-purple-600 font-medium">Población</p>
+                <p class="font-bold text-purple-800">${zone.population.toLocaleString()}</p>
               </div>
-              <div class="grid grid-cols-2 gap-2 mb-2">
-                <div class="bg-purple-50 p-2 rounded-lg">
-                  <p class="text-xs text-purple-600 font-medium">Población</p>
-                  <p class="font-bold text-purple-800">${zone.population.toLocaleString()}</p>
-                </div>
-                <div class="bg-indigo-50 p-2 rounded-lg">
-                  <p class="text-xs text-indigo-600 font-medium">Densidad</p>
-                  <p class="font-bold text-indigo-800">${zone.population_density.toFixed(
-                    1
-                  )} hab/km²</p>
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-2 mb-2">
-                <div class="bg-green-50 p-2 rounded-lg">
-                  <p class="text-xs text-green-600 font-medium">Urbano</p>
-                  <p class="font-bold text-green-800">${
-                    zone.urban_percentage
-                  }%</p>
-                </div>
-                <div class="bg-yellow-50 p-2 rounded-lg">
-                  <p class="text-xs text-yellow-600 font-medium">Rural</p>
-                  <p class="font-bold text-yellow-800">${
-                    zone.rural_percentage
-                  }%</p>
-                </div>
-              </div>
-              <div class="mb-2">
-                <p class="text-xs font-medium mb-1">Ubicación: ${
-                  zone.municipality
-                }, ${zone.department}</p>
-                <p class="text-xs font-medium mb-1">Área: ${
-                  zone.area_km2
-                } km²</p>
-                <p class="text-xs font-medium mb-1">Crecimiento: ${
-                  zone.growth_rate
-                }%</p>
-                <p class="text-xs font-medium mb-1">Infraestructura: ${
-                  zone.infrastructure_level === "advanced"
-                    ? "Avanzada"
-                    : zone.infrastructure_level === "intermediate"
-                    ? "Intermedia"
-                    : "Básica"
-                }</p>
-              </div>
-              <div class="mb-2">
-                <p class="text-xs font-medium mb-1">Distribución por Edad:</p>
-                <div class="flex gap-1 text-xs">
-                  <div class="bg-blue-50 p-1 rounded text-center flex-1">
-                    <p class="font-medium text-blue-800">${zone.age_groups.children.toLocaleString()}</p>
-                    <p class="text-blue-600">0-14</p>
-                  </div>
-                  <div class="bg-green-50 p-1 rounded text-center flex-1">
-                    <p class="font-medium text-green-800">${zone.age_groups.adults.toLocaleString()}</p>
-                    <p class="text-green-600">15-64</p>
-                  </div>
-                  <div class="bg-orange-50 p-1 rounded text-center flex-1">
-                    <p class="font-medium text-orange-800">${zone.age_groups.elderly.toLocaleString()}</p>
-                    <p class="text-orange-600">65+</p>
-                  </div>
-                </div>
-              </div>
-              <div class="mb-2">
-                <p class="text-xs font-medium mb-1">Actividades Económicas:</p>
-                <div class="flex flex-wrap gap-1 text-xs">
-                  ${zone.economic_activity
-                    .map(
-                      (act) =>
-                        `<span class="bg-purple-100 text-purple-800 px-1 py-0.5 rounded-full">${act}</span>`
-                    )
-                    .join("")}
-                </div>
-              </div>
-              <div class="border-t border-gray-200 pt-2 text-gray-500 text-xxs">
-                Última actualización: ${new Date(
-                  zone.updated_at
-                ).toLocaleDateString()}
+
+              <div class="bg-indigo-50 p-2 rounded-lg">
+                <p class="text-xs text-indigo-600 font-medium">Densidad</p>
+                <p class="font-bold text-indigo-800">${zone.population_density.toFixed(
+                  1
+                )} hab/km²</p>
               </div>
             </div>
-          `;
+
+            <div class="grid grid-cols-2 gap-2 mb-2">
+              <div class="bg-green-50 p-2 rounded-lg">
+                <p class="text-xs text-green-600 font-medium">Urbano</p>
+                <p class="font-bold text-green-800">${
+                  zone.urban_percentage
+                }%</p>
+              </div>
+
+              <div class="bg-yellow-50 p-2 rounded-lg">
+                <p class="text-xs text-yellow-600 font-medium">Rural</p>
+                <p class="font-bold text-yellow-800">${
+                  zone.rural_percentage
+                }%</p>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <p class="text-xs font-medium mb-1">Ubicación: ${
+                zone.municipality
+              }, ${zone.department}</p>
+              <p class="text-xs font-medium mb-1">Área: ${
+                zone.area_km2
+              } km²</p>
+              <p class="text-xs font-medium mb-1">Crecimiento: ${
+                zone.growth_rate
+              }%</p>
+              <p class="text-xs font-medium mb-1">Infraestructura: ${
+                zone.infrastructure_level === "advanced"
+                  ? "Avanzada"
+                  : zone.infrastructure_level === "intermediate"
+                  ? "Intermedia"
+                  : "Básica"
+              }</p>
+            </div>
+
+            <div class="mb-2">
+              <p class="text-xs font-medium mb-1">Distribución por Edad:</p>
+
+              <div class="flex gap-1 text-xs">
+                <div class="bg-blue-50 p-1 rounded text-center flex-1">
+                  <p class="font-medium text-blue-800">${zone.age_groups.children.toLocaleString()}</p>
+                  <p class="text-blue-600">0-14</p>
+                </div>
+
+                <div class="bg-green-50 p-1 rounded text-center flex-1">
+                  <p class="font-medium text-green-800">${zone.age_groups.adults.toLocaleString()}</p>
+                  <p class="text-green-600">15-64</p>
+                </div>
+
+                <div class="bg-orange-50 p-1 rounded text-center flex-1">
+                  <p class="font-medium text-orange-800">${zone.age_groups.elderly.toLocaleString()}</p>
+                  <p class="text-orange-600">65+</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <p class="text-xs font-medium mb-1">Actividades Económicas:</p>
+
+              <div class="flex flex-wrap gap-1 text-xs">
+                ${zone.economic_activity
+                  .map(
+                    (act) =>
+                      `<span class="bg-purple-100 text-purple-800 px-1 py-0.5 rounded-full">${act}</span>`
+                  )
+                  .join("")}
+              </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-2 text-gray-500 text-xxs">
+              Última actualización: ${new Date(
+                zone.updated_at
+              ).toLocaleDateString()}
+            </div>
+          </div>
+        `;
 
         circle.bindPopup(popupContent, {
           maxWidth: 400,
@@ -568,11 +591,9 @@ export const Map: React.FC<MapProps> = ({
     }
   }, [layers.populationDensity, populationZones, populationLoading]);
 
-  // 🚨 ACTUALIZAR MARCADORES DE INCIDENTES DE EMERGENCIA DESDE BASE DE DATOS
   useEffect(() => {
     if (!mapInstanceRef.current || emergencyLoading) return;
 
-    // Limpiar marcadores de incidentes existentes
     incidentMarkersRef.current.forEach((marker) => marker.remove());
     incidentMarkersRef.current = [];
 
@@ -629,9 +650,11 @@ export const Map: React.FC<MapProps> = ({
               <p><span class="font-medium">🕒 Reportado:</span> ${new Date(
                 incident.reported_at
               ).toLocaleString()}</p>
+
               <p><span class="font-medium">📍 Ubicación:</span> ${incident.lat.toFixed(
                 4
               )}, ${incident.lng.toFixed(4)}</p>
+
               ${
                 incident.response_time
                   ? `
@@ -639,6 +662,7 @@ export const Map: React.FC<MapProps> = ({
               `
                   : ""
               }
+
               ${
                 incident.description
                   ? `
@@ -646,6 +670,7 @@ export const Map: React.FC<MapProps> = ({
               `
                   : ""
               }
+
               <p><span class="font-medium">📊 Estado:</span> 
                 <span class="${
                   incident.resolved ? "text-green-600" : "text-red-600"
@@ -653,6 +678,7 @@ export const Map: React.FC<MapProps> = ({
                   ${incident.resolved ? "✅ Resuelto" : "🚨 En curso"}
                 </span>
               </p>
+
               ${
                 incident.resolved_at
                   ? `
@@ -677,16 +703,13 @@ export const Map: React.FC<MapProps> = ({
     }
   }, [layers.riskZones, emergencyIncidents, emergencyLoading]);
 
-  // Actualizar ubicación del usuario
   useEffect(() => {
     if (!mapInstanceRef.current || !userLocation) return;
 
-    // Limpiar marcador de usuario existente
     if (userMarkerRef.current) {
       userMarkerRef.current.remove();
     }
 
-    // Crear marcador para la ubicación del usuario con nuevo diseño
     const userIcon = L.divIcon({
       html: `
         <div style="position: relative;">
@@ -702,6 +725,7 @@ export const Map: React.FC<MapProps> = ({
           ">
             ${getUserLocationIconSVG()}
           </div>
+
           <div style="
             position: absolute; 
             top: -6px; 
@@ -723,41 +747,43 @@ export const Map: React.FC<MapProps> = ({
     const userMarker = L.marker([userLocation.lat, userLocation.lng], {
       icon: userIcon,
     });
+
     userMarker.bindPopup(`
       <div class="p-3 text-center">
         <div class="flex items-center justify-center mb-2">
           <div class="w-3 h-3 bg-blue-600 rounded-full mr-2"></div>
           <span class="font-medium text-gray-900">Tu ubicación actual</span>
         </div>
+
         <p class="text-sm text-gray-600">
           Lat: ${userLocation.lat.toFixed(6)}<br>
           Lng: ${userLocation.lng.toFixed(6)}
         </p>
+
         <p class="text-xs text-gray-500 mt-2">
           Precisión: ±${Math.round(userLocation.accuracy)}m
         </p>
       </div>
     `);
+
     userMarker.addTo(mapInstanceRef.current);
     userMarkerRef.current = userMarker;
 
-    // Si no hay centro seleccionado, encontrar el más cercano automáticamente
     if (!selectedCenter) {
       const nearest = findNearestCenter(userLocation, medicalCenters);
+
       if (nearest) {
         createRouteToCenter(nearest);
       }
     }
   }, [userLocation, medicalCenters, selectedCenter]);
 
-  // Efecto para actualizar la ruta cuando cambia el centro seleccionado
   useEffect(() => {
     if (selectedCenter && userLocation) {
       createRouteToCenter(selectedCenter);
     }
   }, [selectedCenter, userLocation]);
 
-  // Efecto para centrar el mapa en el centro seleccionado
   useEffect(() => {
     if (selectedCenter && mapInstanceRef.current) {
       mapInstanceRef.current.setView(
@@ -769,19 +795,21 @@ export const Map: React.FC<MapProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {/* Mapa */}
       <div ref={mapRef} className="h-full w-full" />
 
-      {/* Panel de información de ruta - Posicionado de manera más estable */}
       {routeInfo && selectedCenter && userLocation && (
         <div className="absolute top-4 left-4 bg-white rounded-xl shadow-lg border border-gray-200 p-4 max-w-sm z-[1000] pointer-events-auto">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900 text-sm">Ruta Activa</h3>
+
             <button
               onClick={() => {
                 setRouteInfo(null);
+
                 if (routingControlRef.current && mapInstanceRef.current) {
-                  mapInstanceRef.current.removeControl(routingControlRef.current);
+                  mapInstanceRef.current.removeControl(
+                    routingControlRef.current
+                  );
                   routingControlRef.current = null;
                 }
               }}
@@ -810,6 +838,7 @@ export const Map: React.FC<MapProps> = ({
                   Destino:
                 </span>
               </div>
+
               <p className="text-sm font-medium text-gray-900 truncate">
                 {selectedCenter.name}
               </p>
@@ -820,6 +849,7 @@ export const Map: React.FC<MapProps> = ({
                 <div className="text-lg font-bold text-blue-600">
                   {formatDistance(routeInfo.distance)}
                 </div>
+
                 <div className="text-xs text-blue-600 font-medium">
                   Distancia
                 </div>
@@ -829,6 +859,7 @@ export const Map: React.FC<MapProps> = ({
                 <div className="text-lg font-bold text-green-600">
                   {formatDuration(routeInfo.duration)}
                 </div>
+
                 <div className="text-xs text-green-600 font-medium">
                   Tiempo est.
                 </div>
@@ -845,7 +876,6 @@ export const Map: React.FC<MapProps> = ({
         </div>
       )}
 
-      {/* Indicador de carga de datos de emergencia */}
       {emergencyLoading && layers.riskZones && (
         <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[1000]">
           <div className="flex items-center space-x-2">
@@ -857,7 +887,6 @@ export const Map: React.FC<MapProps> = ({
         </div>
       )}
 
-      {/* Indicador de carga de datos poblacionales */}
       {populationLoading && layers.populationDensity && (
         <div className="absolute top-16 right-4 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-[1000]">
           <div className="flex items-center space-x-2">
@@ -869,13 +898,13 @@ export const Map: React.FC<MapProps> = ({
         </div>
       )}
 
-      {/* CSS para animaciones */}
       <style>{`
         @keyframes pulse {
           0% {
             transform: scale(1);
             opacity: 0.6;
           }
+
           100% {
             transform: scale(1.5);
             opacity: 0;
@@ -889,6 +918,10 @@ export const Map: React.FC<MapProps> = ({
         
         .custom-popup .leaflet-popup-tip {
           background: white;
+        }
+
+        .custom-popup .leaflet-popup-content a {
+          text-decoration: none;
         }
 
         .emergency-zone-popup .leaflet-popup-content-wrapper {
@@ -909,7 +942,6 @@ export const Map: React.FC<MapProps> = ({
           border: 2px solid #FEF3C7;
         }
 
-        /* Asegurar que los controles del mapa no interfieran */
         .leaflet-control-container {
           pointer-events: none;
         }
@@ -918,13 +950,14 @@ export const Map: React.FC<MapProps> = ({
           pointer-events: auto;
         }
 
-        /* Mejorar la estabilidad de la card de ruta */
         .leaflet-container {
           background: #f8fafc;
         }
-        .leaflet-routing-container { display: none !important; }
+
+        .leaflet-routing-container {
+          display: none !important;
+        }
       `}</style>
-      
     </div>
   );
 };
