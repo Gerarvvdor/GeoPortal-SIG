@@ -44,6 +44,15 @@ interface MapProps {
   selectedCenter?: MedicalCenter | null;
 }
 
+const covidHeatmapPoints = [
+  { name: "San Salvador", lat: 13.6989, lng: -89.1914, cases: 320 },
+  { name: "Santa Ana", lat: 13.9944, lng: -89.5594, cases: 180 },
+  { name: "La Libertad", lat: 13.4881, lng: -89.3187, cases: 240 },
+  { name: "San Miguel", lat: 13.4833, lng: -88.1833, cases: 150 },
+  { name: "Sonsonate", lat: 13.718, lng: -89.724, cases: 110 },
+  { name: "Usulután", lat: 13.35, lng: -88.45, cases: 95 },
+];
+
 export const Map: React.FC<MapProps> = ({
   medicalCenters,
   userLocation,
@@ -56,6 +65,7 @@ export const Map: React.FC<MapProps> = ({
   const coverageCirclesRef = useRef<L.Circle[]>([]);
   const riskZonePolygonsRef = useRef<L.Polygon[]>([]);
   const populationZoneCirclesRef = useRef<L.Circle[]>([]);
+  const covidHeatmapCirclesRef = useRef<L.Circle[]>([]);
   const incidentMarkersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const routingControlRef = useRef<any>(null);
@@ -338,6 +348,62 @@ export const Map: React.FC<MapProps> = ({
       });
     }
   }, [layers.coverage, medicalCenters]);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    covidHeatmapCirclesRef.current.forEach((circle) => circle.remove());
+    covidHeatmapCirclesRef.current = [];
+
+    if (layers.covidHeatmap) {
+      covidHeatmapPoints.forEach((point) => {
+        const color =
+          point.cases >= 250
+            ? "#DC2626"
+            : point.cases >= 150
+            ? "#F97316"
+            : "#FACC15";
+
+        const radius = Math.min(30000, 8000 + point.cases * 70);
+        const opacity = Math.min(0.45, 0.2 + point.cases / 1000);
+
+        const circle = L.circle([point.lat, point.lng], {
+          radius,
+          fillColor: color,
+          fillOpacity: opacity,
+          color,
+          weight: 1,
+          opacity: 0.45,
+        });
+
+        circle.bindPopup(
+          `
+            <div class="p-3 min-w-[220px]">
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="font-bold text-gray-900">${point.name}</h3>
+                <span class="px-2 py-1 text-xs font-semibold rounded-full text-white" style="background-color: ${color}">
+                  COVID-19
+                </span>
+              </div>
+              <p class="text-sm text-gray-600">
+                Casos reportados: <span class="font-semibold text-gray-900">${point.cases}</span>
+              </p>
+              <p class="text-xs text-gray-500 mt-2">
+                Capa de calor simulada para visualización demo.
+              </p>
+            </div>
+          `,
+          {
+            maxWidth: 260,
+            className: "covid-heatmap-popup",
+          }
+        );
+
+        circle.addTo(mapInstanceRef.current!);
+        covidHeatmapCirclesRef.current.push(circle);
+      });
+    }
+  }, [layers.covidHeatmap]);
 
   useEffect(() => {
     if (!mapInstanceRef.current || emergencyLoading) return;
@@ -898,6 +964,29 @@ export const Map: React.FC<MapProps> = ({
         </div>
       )}
 
+      {layers.covidHeatmap && (
+        <div className="absolute bottom-4 right-4 bg-white rounded-xl shadow-lg border border-red-100 p-4 z-[1000] max-w-xs">
+          <div className="flex items-center space-x-2 mb-2">
+            <div className="w-3 h-3 rounded-full bg-red-600"></div>
+            <p className="text-sm font-semibold text-gray-900">Mapa de calor COVID-19</p>
+          </div>
+          <div className="space-y-1 text-xs text-gray-600">
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-red-600"></span>
+              <span>Casos altos</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+              <span>Casos medios</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
+              <span>Casos bajos</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes pulse {
           0% {
@@ -940,6 +1029,12 @@ export const Map: React.FC<MapProps> = ({
           border-radius: 12px;
           box-shadow: 0 10px 25px rgba(0,0,0,0.15);
           border: 2px solid #FEF3C7;
+        }
+
+        .covid-heatmap-popup .leaflet-popup-content-wrapper {
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(220, 38, 38, 0.2);
+          border: 2px solid #FEE2E2;
         }
 
         .leaflet-control-container {

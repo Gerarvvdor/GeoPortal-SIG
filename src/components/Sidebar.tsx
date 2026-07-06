@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, AlertTriangle, Users } from 'lucide-react';
+import { MapPin, AlertTriangle, Users, Activity } from 'lucide-react';
 import { LayerControls, CoverageStats } from '../types';
 
 interface SidebarProps {
@@ -82,6 +82,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
               <div
                 className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
                   layers.populationDensity ? 'translate-x-6' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Mapa de calor COVID-19 */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Activity className="w-4 h-4 text-red-600" />
+              <div>
+                <p className="font-medium text-gray-900">Mapa de calor COVID-19</p>
+                <p className="text-xs text-gray-500">Zonas con mayor incidencia de casos</p>
+              </div>
+            </div>
+            <button
+              onClick={() => onLayerToggle('covidHeatmap')}
+              className={`w-12 h-6 rounded-full transition-colors relative ${
+                layers.covidHeatmap ? 'bg-red-600' : 'bg-gray-300'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                  layers.covidHeatmap ? 'translate-x-6' : 'translate-x-0.5'
                 }`}
               />
             </button>

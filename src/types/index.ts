@@ -34,6 +34,7 @@ export interface LayerControls {
   coverage: boolean;
   riskZones: boolean;
   populationDensity: boolean;
+  covidHeatmap: boolean;
 }
 // 🚨 NUEVAS INTERFACES PARA ZONAS DE EMERGENCIA
 export interface EmergencyZone {

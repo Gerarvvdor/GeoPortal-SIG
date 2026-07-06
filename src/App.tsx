@@ -30,7 +30,8 @@ function App() {
   const [layers, setLayers] = useState<LayerControls>({
     coverage: true,
     riskZones: false,
-    populationDensity: false
+    populationDensity: false,
+    covidHeatmap: true
   });
 
   const [selectedCenter, setSelectedCenter] = useState<MedicalCenter | null>(null);
