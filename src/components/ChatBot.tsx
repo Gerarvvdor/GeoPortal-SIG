@@ -106,7 +106,7 @@ export const ChatBot: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="m-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 group relative"
+          className="m-3 sm:m-6 bg-gradient-to-br from-blue-600 to-blue-700 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300 group relative"
         >
           <div className="relative">
             <MessageCircle className="w-6 h-6" />
@@ -128,7 +128,7 @@ export const ChatBot: React.FC = () => {
 
       {/* Ventana del chat flotante */}
       {isOpen && (
-        <div className="m-6 bg-white rounded-2xl shadow-2xl border border-gray-200 w-96 h-[500px] flex flex-col overflow-hidden chat-window">
+        <div className="m-3 sm:m-6 bg-white rounded-2xl shadow-2xl border border-gray-200 w-[calc(100vw-24px)] sm:w-96 h-[70vh] sm:h-[500px] flex flex-col overflow-hidden chat-window">
           {/* Header del chatbot mejorado */}
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
             <div className="flex items-center space-x-3">
@@ -192,7 +192,7 @@ export const ChatBot: React.FC = () => {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Pregunta sobre emergencias, zonas de riesgo..."
                   className="w-full border border-gray-300 rounded-full px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 shadow-sm"
                 />
@@ -210,19 +210,19 @@ export const ChatBot: React.FC = () => {
             <div className="flex flex-wrap gap-2 mt-3">
               <button 
                 onClick={() => setInputText('zonas de riesgo')}
-                className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full hover:bg-red-200 transition-colors"
+                className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-full hover:bg-red-200 transition-colors"
               >
                 Zonas de riesgo
               </button>
               <button 
                 onClick={() => setInputText('emergencias')}
-                className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200 transition-colors"
+                className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full hover:bg-orange-200 transition-colors"
               >
                 Emergencias
               </button>
               <button 
                 onClick={() => setInputText('hospitales')}
-                className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors"
+                className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full hover:bg-blue-200 transition-colors"
               >
                 Hospitales
               </button>

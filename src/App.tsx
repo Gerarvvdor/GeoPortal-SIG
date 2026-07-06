@@ -31,7 +31,7 @@ function App() {
     coverage: true,
     riskZones: false,
     populationDensity: false,
-    covidHeatmap: true
+    covidHeatmap: false
   });
 
   const [selectedCenter, setSelectedCenter] = useState<MedicalCenter | null>(null);

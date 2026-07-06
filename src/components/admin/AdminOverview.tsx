@@ -87,24 +87,24 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({ user, userProfile 
   return (
     <div className="flex-1 bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
-            <p className="text-gray-600 mt-1">Bienvenido de vuelta, {displayName}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Panel de Administración</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Bienvenido de vuelta, {displayName}</p>
           </div>
           <div className="flex items-center space-x-4">
             <div className="bg-green-100 px-3 py-1 rounded-full">
-              <span className="text-green-800 text-sm font-medium">Sistema Activo</span>
+              <span className="text-green-800 text-xs sm:text-sm font-medium">Sistema Activo</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           {stats.map((stat, index) => {
             const Icon = stat.icon;
             const colorClasses = getColorClasses(stat.color).split(' ');

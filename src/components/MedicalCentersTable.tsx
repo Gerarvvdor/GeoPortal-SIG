@@ -1,7 +1,7 @@
 import React from 'react';
 import { MedicalCenter, UserLocation } from '../types';
 import { calculateDistance, getCenterColor, formatDistance } from '../utils/mapUtils';
-import { MapPin, Phone, Clock, Heart, Building2, Guitar as Hospital } from 'lucide-react';
+import { MapPin, Phone, Clock, Heart, Building2, Cross } from 'lucide-react';
 
 interface MedicalCentersTableProps {
   medicalCenters: MedicalCenter[];
@@ -19,7 +19,7 @@ export const MedicalCentersTable: React.FC<MedicalCentersTableProps> = ({
   const getTypeIcon = (type: MedicalCenter['type']) => {
     switch (type) {
       case 'hospital':
-        return <Hospital className="w-4 h-4" />;
+        return <Cross className="w-4 h-4" />;
       case 'clinic':
         return <Building2 className="w-4 h-4" />;
       case 'health_center':
@@ -52,8 +52,8 @@ export const MedicalCentersTable: React.FC<MedicalCentersTableProps> = ({
 
   return (
     <div className="bg-white border-t border-gray-200 shadow-lg">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
           <MapPin className="w-5 h-5 mr-2 text-blue-600" />
           Centros Médicos Disponibles
           <span className="ml-2 text-sm font-normal text-gray-500">
@@ -62,7 +62,83 @@ export const MedicalCentersTable: React.FC<MedicalCentersTableProps> = ({
         </h3>
       </div>
       
-      <div className="overflow-x-auto max-h-80 overflow-y-auto">
+      {/* Mobile card view */}
+      <div className="md:hidden max-h-80 overflow-y-auto divide-y divide-gray-200">
+        {sortedCenters.map((center) => {
+          const distance = userLocation
+            ? calculateDistance(userLocation.lat, userLocation.lng, center.lat, center.lng)
+            : 0;
+          const isSelected = selectedCenter?.id === center.id;
+          const color = getCenterColor(center.type);
+          return (
+            <div
+              key={center.id}
+              className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+              }`}
+              onClick={() => onCenterSelect(center)}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center space-x-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: color, color: 'white' }}
+                  >
+                    {getTypeIcon(center.type)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{center.name}</p>
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-0.5"
+                      style={{ backgroundColor: `${color}20`, color: color }}
+                    >
+                      {getTypeName(center.type)}
+                    </span>
+                  </div>
+                </div>
+                {userLocation && (
+                  <span className="text-sm font-medium text-blue-600 flex-shrink-0">
+                    {formatDistance(distance)}
+                  </span>
+                )}
+              </div>
+              <div className="space-y-1 text-sm text-gray-600 ml-11">
+                <div className="flex items-start">
+                  <MapPin className="w-3.5 h-3.5 mr-1.5 mt-0.5 text-gray-400 flex-shrink-0" />
+                  <span>{center.address}</span>
+                </div>
+                <div className="flex items-center">
+                  <Phone className="w-3.5 h-3.5 mr-1.5 text-gray-400 flex-shrink-0" />
+                  <span>{center.phone}</span>
+                </div>
+                <div className="flex items-start">
+                  <Clock className="w-3.5 h-3.5 mr-1.5 mt-0.5 text-gray-400 flex-shrink-0" />
+                  <span>{center.schedule}</span>
+                </div>
+              </div>
+              {center.emergency && (
+                <div className="ml-11 mt-1 text-xs text-red-600 font-medium">
+                  🚨 Emergencias 24h
+                </div>
+              )}
+              <div className="mt-2 ml-11">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCenterSelect(center);
+                  }}
+                  className="text-blue-600 hover:text-blue-900 text-sm font-medium py-1"
+                >
+                  Ver en Mapa
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop table view */}
+      <div className="hidden md:block overflow-x-auto max-h-80 overflow-y-auto">
         <table className="w-full">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
@@ -182,17 +258,17 @@ export const MedicalCentersTable: React.FC<MedicalCentersTableProps> = ({
       </div>
       
       {selectedCenter && (
-        <div className="px-6 py-4 bg-blue-50 border-t border-blue-200">
-          <div className="flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-blue-50 border-t border-blue-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 w-full">
             <div>
               <h4 className="font-medium text-blue-900">Centro Seleccionado:</h4>
               <p className="text-sm text-blue-700">{selectedCenter.name}</p>
             </div>
-            <div className="text-right">
+            <div className="sm:text-right">
               <p className="text-sm text-blue-600">
                 Servicios: {selectedCenter.services.length}
               </p>
-              <div className="flex flex-wrap gap-1 mt-1 justify-end">
+              <div className="flex flex-wrap gap-1 mt-1 sm:justify-end">
                 {selectedCenter.services.slice(0, 3).map((service, index) => (
                   <span 
                     key={index}
