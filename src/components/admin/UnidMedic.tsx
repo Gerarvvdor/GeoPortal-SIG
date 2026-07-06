@@ -411,14 +411,14 @@ export const UnidMedic: React.FC<UnidMedicProps> = ({ user }) => {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleEdit(center)}
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
+                            className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Editar"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(center.id)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
+                            className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar"
                           >
                             <Trash2 className="w-4 h-4" />

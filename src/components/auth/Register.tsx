@@ -139,7 +139,7 @@ export const Register: React.FC<RegisterProps> = ({ onSuccess, onSwitchToLogin }
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Full Name */}
             <div>

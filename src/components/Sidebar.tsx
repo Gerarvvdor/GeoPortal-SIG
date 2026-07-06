@@ -6,11 +6,23 @@ interface SidebarProps {
   layers: LayerControls;
   onLayerToggle: (layer: keyof LayerControls) => void;
   stats: CoverageStats;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle, isOpen, onClose }) => {
   return (
-    <div className="bg-white w-80 h-full shadow-lg border-r border-gray-200 overflow-y-auto">
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-[1100] lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      <div className={`bg-white w-80 h-full shadow-lg border-r border-gray-200 overflow-y-auto
+        fixed top-0 left-0 z-[1200] transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-auto
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
           <MapPin className="w-5 h-5 text-blue-600" />
@@ -19,7 +31,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
 
         <div className="space-y-4">
           {/* Áreas de Cobertura */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div 
+            onClick={() => onLayerToggle('coverage')}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+          >
             <div className="flex items-center space-x-3">
               <MapPin className="w-4 h-4 text-gray-600" />
               <div>
@@ -28,8 +43,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
               </div>
             </div>
             <button
-              onClick={() => onLayerToggle('coverage')}
-              className={`w-12 h-6 rounded-full transition-colors relative ${
+              type="button"
+              className={`w-12 h-6 rounded-full transition-colors relative pointer-events-none ${
                 layers.coverage ? 'bg-blue-600' : 'bg-gray-300'
               }`}
             >
@@ -42,7 +57,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
           </div>
 
           {/* Zonas de Riesgo */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div 
+            onClick={() => onLayerToggle('riskZones')}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+          >
             <div className="flex items-center space-x-3">
               <AlertTriangle className="w-4 h-4 text-gray-600" />
               <div>
@@ -51,8 +69,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
               </div>
             </div>
             <button
-              onClick={() => onLayerToggle('riskZones')}
-              className={`w-12 h-6 rounded-full transition-colors relative ${
+              type="button"
+              className={`w-12 h-6 rounded-full transition-colors relative pointer-events-none ${
                 layers.riskZones ? 'bg-orange-600' : 'bg-gray-300'
               }`}
             >
@@ -65,7 +83,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
           </div>
 
           {/* Densidad Poblacional */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div 
+            onClick={() => onLayerToggle('populationDensity')}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+          >
             <div className="flex items-center space-x-3">
               <Users className="w-4 h-4 text-gray-600" />
               <div>
@@ -74,8 +95,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
               </div>
             </div>
             <button
-              onClick={() => onLayerToggle('populationDensity')}
-              className={`w-12 h-6 rounded-full transition-colors relative ${
+              type="button"
+              className={`w-12 h-6 rounded-full transition-colors relative pointer-events-none ${
                 layers.populationDensity ? 'bg-purple-600' : 'bg-gray-300'
               }`}
             >
@@ -88,7 +109,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
           </div>
 
           {/* Mapa de calor COVID-19 */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div 
+            onClick={() => onLayerToggle('covidHeatmap')}
+            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+          >
             <div className="flex items-center space-x-3">
               <Activity className="w-4 h-4 text-red-600" />
               <div>
@@ -97,8 +121,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
               </div>
             </div>
             <button
-              onClick={() => onLayerToggle('covidHeatmap')}
-              className={`w-12 h-6 rounded-full transition-colors relative ${
+              type="button"
+              className={`w-12 h-6 rounded-full transition-colors relative pointer-events-none ${
                 layers.covidHeatmap ? 'bg-red-600' : 'bg-gray-300'
               }`}
             >
@@ -111,6 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ layers, onLayerToggle }) => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
