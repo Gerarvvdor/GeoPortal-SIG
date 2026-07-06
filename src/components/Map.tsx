@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import "leaflet.heat";
 import { MedicalCenter, UserLocation, LayerControls } from "../types";
 import {
   calculateDistance,
@@ -44,13 +45,126 @@ interface MapProps {
   selectedCenter?: MedicalCenter | null;
 }
 
-const covidHeatmapPoints = [
-  { name: "San Salvador", lat: 13.6989, lng: -89.1914, cases: 320 },
-  { name: "Santa Ana", lat: 13.9944, lng: -89.5594, cases: 180 },
-  { name: "La Libertad", lat: 13.4881, lng: -89.3187, cases: 240 },
-  { name: "San Miguel", lat: 13.4833, lng: -88.1833, cases: 150 },
-  { name: "Sonsonate", lat: 13.718, lng: -89.724, cases: 110 },
-  { name: "Usulután", lat: 13.35, lng: -88.45, cases: 95 },
+const covidHeatmapPoints: [number, number, number][] = [
+  // San Salvador (zona de mayor concentración)
+  [13.6989, -89.1914, 1.0],
+  [13.7100, -89.2050, 0.9],
+  [13.6850, -89.1800, 0.85],
+  [13.7200, -89.1750, 0.8],
+  [13.6900, -89.2100, 0.75],
+  [13.7050, -89.1650, 0.7],
+  [13.6780, -89.2200, 0.65],
+  [13.7150, -89.2300, 0.6],
+  [13.6600, -89.1900, 0.55],
+  [13.7300, -89.1600, 0.5],
+  [13.6700, -89.1500, 0.6],
+  [13.7400, -89.2100, 0.45],
+  [13.6500, -89.2000, 0.4],
+  [13.7250, -89.1400, 0.5],
+  [13.6950, -89.2400, 0.35],
+  // Soyapango / Ilopango
+  [13.7100, -89.1500, 0.8],
+  [13.7200, -89.1300, 0.7],
+  [13.7000, -89.1200, 0.65],
+  [13.7150, -89.1100, 0.55],
+  // Santa Tecla / Antiguo Cuscatlán
+  [13.6770, -89.2900, 0.7],
+  [13.6600, -89.2500, 0.65],
+  [13.6700, -89.2700, 0.6],
+  [13.6500, -89.2600, 0.5],
+  // Mejicanos / Ciudad Delgado
+  [13.7400, -89.1800, 0.6],
+  [13.7350, -89.1900, 0.55],
+  [13.7500, -89.1700, 0.5],
+  // Santa Ana
+  [13.9944, -89.5594, 0.7],
+  [14.0050, -89.5500, 0.6],
+  [13.9850, -89.5700, 0.55],
+  [14.0100, -89.5400, 0.5],
+  [13.9800, -89.5800, 0.45],
+  [14.0200, -89.5600, 0.4],
+  [13.9700, -89.5500, 0.35],
+  [14.0000, -89.5300, 0.4],
+  // La Libertad
+  [13.4881, -89.3187, 0.8],
+  [13.4950, -89.3100, 0.7],
+  [13.4800, -89.3300, 0.65],
+  [13.5000, -89.3000, 0.55],
+  [13.4700, -89.3200, 0.5],
+  [13.5100, -89.2900, 0.45],
+  [13.4600, -89.3400, 0.4],
+  // San Miguel
+  [13.4833, -88.1833, 0.65],
+  [13.4900, -88.1700, 0.55],
+  [13.4750, -88.1950, 0.5],
+  [13.5000, -88.1600, 0.45],
+  [13.4700, -88.2000, 0.4],
+  [13.4850, -88.1500, 0.35],
+  [13.4600, -88.1800, 0.3],
+  // Sonsonate
+  [13.7180, -89.7240, 0.55],
+  [13.7250, -89.7150, 0.45],
+  [13.7100, -89.7350, 0.4],
+  [13.7300, -89.7050, 0.35],
+  [13.7050, -89.7400, 0.3],
+  // Usulután
+  [13.3500, -88.4500, 0.45],
+  [13.3600, -88.4400, 0.4],
+  [13.3400, -88.4600, 0.35],
+  [13.3700, -88.4300, 0.3],
+  // San Vicente
+  [13.6417, -88.7850, 0.4],
+  [13.6500, -88.7750, 0.35],
+  [13.6350, -88.7950, 0.3],
+  // Chalatenango
+  [14.0333, -88.9333, 0.35],
+  [14.0400, -88.9250, 0.3],
+  [14.0250, -88.9400, 0.25],
+  // La Paz (Zacatecoluca)
+  [13.5000, -88.8667, 0.4],
+  [13.5100, -88.8600, 0.35],
+  [13.4900, -88.8750, 0.3],
+  // Ahuachapán
+  [13.9214, -89.8453, 0.35],
+  [13.9300, -89.8400, 0.3],
+  [13.9100, -89.8500, 0.25],
+  // Cojutepeque (Cuscatlán)
+  [13.7167, -88.9333, 0.4],
+  [13.7250, -88.9250, 0.35],
+  [13.7100, -88.9400, 0.3],
+  // La Unión
+  [13.3333, -87.8440, 0.3],
+  [13.3400, -87.8350, 0.25],
+  [13.3250, -87.8500, 0.2],
+  // Morazán (San Francisco Gotera)
+  [13.6958, -88.1044, 0.25],
+  [13.7000, -88.0950, 0.2],
+  // Apopa
+  [13.8072, -89.1794, 0.55],
+  [13.8150, -89.1700, 0.45],
+  [13.8000, -89.1900, 0.4],
+  // Colón / Lourdes
+  [13.7167, -89.3667, 0.45],
+  [13.7250, -89.3600, 0.4],
+  // San Martín
+  [13.7167, -89.0500, 0.4],
+  [13.7250, -89.0400, 0.35],
+  // Tonacatepeque
+  [13.7778, -89.1167, 0.35],
+  [13.7850, -89.1100, 0.3],
+  // Puerto de La Libertad
+  [13.4833, -89.3167, 0.5],
+  [13.4750, -89.3250, 0.45],
+  // Zaragoza
+  [13.5833, -89.2833, 0.35],
+  // Quezaltepeque
+  [13.8314, -89.2722, 0.4],
+  [13.8400, -89.2650, 0.35],
+  // Metapán
+  [14.3333, -89.4500, 0.25],
+  // Sensuntepeque (Cabañas)
+  [13.8667, -88.6333, 0.25],
+  [13.8750, -88.6250, 0.2],
 ];
 
 export const Map: React.FC<MapProps> = ({
@@ -65,7 +179,7 @@ export const Map: React.FC<MapProps> = ({
   const coverageCirclesRef = useRef<L.Circle[]>([]);
   const riskZonePolygonsRef = useRef<L.Polygon[]>([]);
   const populationZoneCirclesRef = useRef<L.Circle[]>([]);
-  const covidHeatmapCirclesRef = useRef<L.Circle[]>([]);
+  const covidHeatmapLayerRef = useRef<any>(null);
   const incidentMarkersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
   const routingControlRef = useRef<any>(null);
@@ -221,7 +335,7 @@ export const Map: React.FC<MapProps> = ({
       const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${center.lat},${center.lng}`;
 
       const popupContent = `
-        <div class="p-2 min-w-[280px] text-sm">
+        <div class="p-2 text-sm" style="min-width: min(280px, calc(100vw - 80px));">
           <div class="flex items-center justify-between mb-1">
             <h3 class="font-bold text-base text-gray-900">${center.name}</h3>
             <span class="px-2 py-0.5 text-xs font-medium rounded-full" style="background-color: ${color}20; color: ${color}">
@@ -275,7 +389,7 @@ export const Map: React.FC<MapProps> = ({
             </div>
           </div>                                                   
 
-          <--------------boton de como llegar google maps---------------->
+          <!-- Botón de cómo llegar Google Maps -->
           <a
             href="${googleMapsUrl}"
             target="_blank"
@@ -352,56 +466,31 @@ export const Map: React.FC<MapProps> = ({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    covidHeatmapCirclesRef.current.forEach((circle) => circle.remove());
-    covidHeatmapCirclesRef.current = [];
+    // Remove existing heatmap layer
+    if (covidHeatmapLayerRef.current) {
+      mapInstanceRef.current.removeLayer(covidHeatmapLayerRef.current);
+      covidHeatmapLayerRef.current = null;
+    }
 
     if (layers.covidHeatmap) {
-      covidHeatmapPoints.forEach((point) => {
-        const color =
-          point.cases >= 250
-            ? "#DC2626"
-            : point.cases >= 150
-            ? "#F97316"
-            : "#FACC15";
-
-        const radius = Math.min(30000, 8000 + point.cases * 70);
-        const opacity = Math.min(0.45, 0.2 + point.cases / 1000);
-
-        const circle = L.circle([point.lat, point.lng], {
-          radius,
-          fillColor: color,
-          fillOpacity: opacity,
-          color,
-          weight: 1,
-          opacity: 0.45,
-        });
-
-        circle.bindPopup(
-          `
-            <div class="p-3 min-w-[220px]">
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="font-bold text-gray-900">${point.name}</h3>
-                <span class="px-2 py-1 text-xs font-semibold rounded-full text-white" style="background-color: ${color}">
-                  COVID-19
-                </span>
-              </div>
-              <p class="text-sm text-gray-600">
-                Casos reportados: <span class="font-semibold text-gray-900">${point.cases}</span>
-              </p>
-              <p class="text-xs text-gray-500 mt-2">
-                Capa de calor simulada para visualización demo.
-              </p>
-            </div>
-          `,
-          {
-            maxWidth: 260,
-            className: "covid-heatmap-popup",
-          }
-        );
-
-        circle.addTo(mapInstanceRef.current!);
-        covidHeatmapCirclesRef.current.push(circle);
+      const heat = (L as any).heatLayer(covidHeatmapPoints, {
+        radius: 30,
+        blur: 25,
+        maxZoom: 12,
+        max: 1.0,
+        minOpacity: 0.35,
+        gradient: {
+          0.0: '#0000FF',
+          0.2: '#00BFFF',
+          0.4: '#00FF00',
+          0.6: '#FFFF00',
+          0.8: '#FFA500',
+          1.0: '#FF0000',
+        },
       });
+
+      heat.addTo(mapInstanceRef.current);
+      covidHeatmapLayerRef.current = heat;
     }
   }, [layers.covidHeatmap]);
 
@@ -864,7 +953,7 @@ export const Map: React.FC<MapProps> = ({
       <div ref={mapRef} className="h-full w-full" />
 
       {routeInfo && selectedCenter && userLocation && (
-        <div className="absolute top-4 left-4 bg-white rounded-xl shadow-lg border border-gray-200 p-4 max-w-sm z-[1000] pointer-events-auto">
+        <div className="absolute top-4 left-4 bg-white rounded-xl shadow-lg border border-gray-200 p-3 sm:p-4 max-w-[calc(100%-32px)] sm:max-w-sm z-[1000] pointer-events-auto">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-gray-900 text-sm">Ruta Activa</h3>
 
@@ -965,25 +1054,27 @@ export const Map: React.FC<MapProps> = ({
       )}
 
       {layers.covidHeatmap && (
-        <div className="absolute bottom-4 right-4 bg-white rounded-xl shadow-lg border border-red-100 p-4 z-[1000] max-w-xs">
-          <div className="flex items-center space-x-2 mb-2">
+        <div className="absolute bottom-16 sm:bottom-4 right-4 bg-white rounded-xl shadow-lg border border-red-100 p-3 sm:p-4 z-[1000] max-w-[calc(100%-32px)] sm:max-w-xs">
+          <div className="flex items-center space-x-2 mb-3">
             <div className="w-3 h-3 rounded-full bg-red-600"></div>
             <p className="text-sm font-semibold text-gray-900">Mapa de calor COVID-19</p>
           </div>
-          <div className="space-y-1 text-xs text-gray-600">
-            <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-red-600"></span>
-              <span>Casos altos</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-orange-500"></span>
-              <span>Casos medios</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
-              <span>Casos bajos</span>
+          <div className="mb-2">
+            <div
+              style={{
+                height: '14px',
+                borderRadius: '7px',
+                background: 'linear-gradient(to right, #0000FF, #00BFFF, #00FF00, #FFFF00, #FFA500, #FF0000)',
+                border: '1px solid #e5e7eb',
+              }}
+            />
+            <div className="flex justify-between mt-1 text-xs text-gray-500">
+              <span>Bajo</span>
+              <span>Medio</span>
+              <span>Alto</span>
             </div>
           </div>
+          <p className="text-xs text-gray-400 mt-1">Densidad de casos reportados</p>
         </div>
       )}
 

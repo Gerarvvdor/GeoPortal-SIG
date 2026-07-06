@@ -36,6 +36,9 @@ function App() {
 
   const [selectedCenter, setSelectedCenter] = useState<MedicalCenter | null>(null);
 
+  // Mobile sidebar toggle state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   /* ============================
      BARRA DE BÚSQUEDA - ESTADOS
      ============================ */
@@ -90,6 +93,10 @@ function App() {
     await signOut();
   };
 
+  const handleToggleSidebar = () => {
+    setSidebarOpen(prev => !prev);
+  };
+
   // Estadísticas calculadas basadas en los centros filtrados
   const stats: CoverageStats = {
     coveredArea: 78,
@@ -100,7 +107,7 @@ function App() {
 
   if (authLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen-safe flex items-center justify-center bg-gray-50">
         <LoadingSpinner
           size="lg"
           text="Cargando aplicación..."
@@ -125,7 +132,7 @@ function App() {
 
   if (centersLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen-safe flex items-center justify-center bg-gray-50">
         <LoadingSpinner
           size="lg"
           text={`Cargando centros médicos${isSupabaseConfigured ? ' desde Supabase' : ' (modo demo)'}...`}
@@ -136,7 +143,7 @@ function App() {
 
   if (centersError) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen-safe flex items-center justify-center bg-gray-50">
         <ErrorMessage
           message={`Error al cargar datos: ${centersError}`}
           onRetry={refetchCenters}
@@ -146,7 +153,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 relative">
+    <div className="h-screen-safe flex flex-col bg-gray-50 relative">
       <Header
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -154,6 +161,7 @@ function App() {
         userProfile={userProfile}
         isAdmin={isAdmin}
         onSignOut={handleSignOut}
+        onToggleSidebar={handleToggleSidebar}
       />
 
       {/* ============================
@@ -162,11 +170,11 @@ function App() {
           Permite buscar por nombre, dirección, teléfono, horario o servicios.
           También permite filtrar por tipo de centro médico.
           ============================ */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-[1000] w-[460px]">
+      <div className="absolute top-20 sm:top-5 left-1/2 -translate-x-1/2 z-[1000] w-[calc(100%-24px)] max-w-[460px]">
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl shadow-md px-3 py-2">
 
           {/* Icono de búsqueda */}
-          <Search className="w-4 h-4 text-gray-400" />
+          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
 
           {/* Campo de texto de búsqueda */}
           <input
@@ -174,7 +182,7 @@ function App() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar centro médico..."
-            className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
+            className="flex-1 min-w-0 bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
           />
 
           {/* Filtro por tipo de centro médico */}
@@ -183,7 +191,7 @@ function App() {
             onChange={(e) =>
               setTypeFilter(e.target.value as 'all' | 'hospital' | 'clinic' | 'health_center')
             }
-            className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-gray-600 outline-none"
+            className="text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-gray-600 outline-none flex-shrink-0"
           >
             <option value="all">Todos</option>
             <option value="hospital">Hospitales</option>
@@ -195,7 +203,7 @@ function App() {
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="p-1 rounded-full hover:bg-gray-100"
+              className="p-1 rounded-full hover:bg-gray-100 flex-shrink-0"
               title="Limpiar búsqueda"
             >
               <X className="w-4 h-4 text-gray-400" />
@@ -209,6 +217,8 @@ function App() {
           layers={layers}
           onLayerToggle={handleLayerToggle}
           stats={stats}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
         />
 
         <div className="flex-1 flex flex-col relative">
@@ -235,10 +245,10 @@ function App() {
       <ChatBot />
 
       {!isSupabaseConfigured && (
-        <div className="fixed bottom-4 left-4 bg-yellow-100 border border-yellow-300 rounded-lg p-3 shadow-lg z-50">
+        <div className="fixed bottom-4 left-4 bg-yellow-100 border border-yellow-300 rounded-lg p-3 shadow-lg z-50 max-w-[calc(100%-32px)] sm:max-w-xs">
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-            <span className="text-sm text-yellow-800 font-medium"></span>
+            <div className="w-2 h-2 bg-yellow-500 rounded-full flex-shrink-0"></div>
+            <span className="text-sm text-yellow-800 font-medium">Modo Demo</span>
           </div>
           <p className="text-xs text-yellow-700 mt-1">
             Datos simulados - Configure Supabase para datos reales

@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* iOS Safari viewport height fix */
+:root {
+  --vh: 1vh;
+}
+
+.h-screen-safe {
+  height: 100vh;
+  height: 100dvh;
+}
